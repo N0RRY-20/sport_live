@@ -9,15 +9,27 @@ export const MATCH_STATUS = {
   FINISHED: 'finished',
 };
 
+const ISO_DATE_REGEX =
+  /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d+)?(?:Z|[+-]\d{2}:?\d{2})$/;
+
 /**
- * Helper function to validate ISO date strings
+ * Strict helper function to validate ISO 8601 datetime strings
  * @param {string} val
  * @returns {boolean}
  */
-const isValidIsoDate = (val) => {
-  if (typeof val !== 'string' || val.trim() === '') return false;
-  const timestamp = Date.parse(val);
-  return !isNaN(timestamp);
+export const isValidIsoDate = (val) => {
+  if (typeof val !== 'string' || !ISO_DATE_REGEX.test(val)) return false;
+  const date = new Date(val);
+  if (Number.isNaN(date.getTime())) return false;
+
+  const [datePart] = val.split('T');
+  const [y, m, d] = datePart.split('-').map(Number);
+  const checkDate = new Date(Date.UTC(y, m - 1, d));
+  return (
+    checkDate.getUTCFullYear() === y &&
+    checkDate.getUTCMonth() === m - 1 &&
+    checkDate.getUTCDate() === d
+  );
 };
 
 /**
@@ -58,10 +70,14 @@ export const createMatchSchema = z
     awayScore: z.coerce.number().int().nonnegative().optional(),
   })
   .superRefine((data, ctx) => {
+    if (!isValidIsoDate(data.startTime) || !isValidIsoDate(data.endTime)) {
+      return;
+    }
+
     const startTimeMs = new Date(data.startTime).getTime();
     const endTimeMs = new Date(data.endTime).getTime();
 
-    if (!isNaN(startTimeMs) && !isNaN(endTimeMs) && endTimeMs <= startTimeMs) {
+    if (endTimeMs <= startTimeMs) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
         message: 'endTime must be chronologically after startTime',
