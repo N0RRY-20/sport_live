@@ -1,20 +1,19 @@
-import express from 'express';
-import { eq } from 'drizzle-orm';
-import { db, matches, commentary } from './db/index.js';
+import express from "express";
+import { eq } from "drizzle-orm";
+import { db, matches, commentary } from "./db/index.js";
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// Middleware
 app.use(express.json());
 
 // 1. Health check / Welcome route
-app.get('/', (req, res) => {
-  res.json({ message: 'Real-time Sports API is running!' });
+app.get("/", (req, res) => {
+  res.json({ message: "Real-time Sports API is running!" });
 });
 
 // 2. Get all matches (including their live commentary)
-app.get('/matches', async (req, res) => {
+app.get("/matches", async (req, res) => {
   try {
     const allMatches = await db.query.matches.findMany({
       with: {
@@ -28,7 +27,7 @@ app.get('/matches', async (req, res) => {
 });
 
 // 3. Create a new match
-app.post('/matches', async (req, res) => {
+app.post("/matches", async (req, res) => {
   try {
     const { sport, homeTeam, awayTeam, startTime } = req.body;
     const [newMatch] = await db
@@ -48,10 +47,20 @@ app.post('/matches', async (req, res) => {
 });
 
 // 4. Add live commentary event to a match
-app.post('/matches/:id/commentary', async (req, res) => {
+app.post("/matches/:id/commentary", async (req, res) => {
   try {
     const matchId = parseInt(req.params.id, 10);
-    const { minute, sequence, period, eventType, actor, team, message, metadata, tags } = req.body;
+    const {
+      minute,
+      sequence,
+      period,
+      eventType,
+      actor,
+      team,
+      message,
+      metadata,
+      tags,
+    } = req.body;
 
     const [newCommentary] = await db
       .insert(commentary)
