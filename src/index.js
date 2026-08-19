@@ -5,6 +5,7 @@ import { db, matches, commentary } from "./db/index.js";
 const app = express();
 const PORT = process.env.PORT || 3000;
 
+// Middleware
 app.use(express.json());
 
 // 1. Health check / Welcome route
