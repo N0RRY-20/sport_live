@@ -1,20 +1,30 @@
-import express from 'express';
-import { matchRouter } from './routes/matches.js';
+import express from "express";
+import http from "http";
+import { matchRouter } from "./routes/matches.js";
+import { attachWebSocketServer } from "./ws/server.js";
+
+const PORT = process.env.PORT || 8000;
+const HOST = process.env.HOST || "0.0.0.0";
 
 const app = express();
-const PORT = process.env.PORT || 3000;
+
+const server = http.createServer(app);
 
 // Middleware
 app.use(express.json());
 
 // Routes
-app.get('/', (req, res) => {
-  res.send('Server is running!');
+app.get("/", (req, res) => {
+  res.send("Server is running!");
 });
 
-app.use('/matches', matchRouter);
+app.use("/matches", matchRouter);
+
+const { broadcastMatchCreated } = attachWebSocketServer(server);
+
+app.locals.broadcastMatchCreated = broadcastMatchCreated;
 
 // Start server
-app.listen(PORT, () => {
-  console.log(`Server is running on http://localhost:${PORT}`);
+server.listen(PORT, HOST, () => {
+  console.log(`Server is running on http://${HOST}:${PORT}`);
 });

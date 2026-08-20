@@ -1,7 +1,10 @@
 import { Router } from "express";
 import { desc } from "drizzle-orm";
 import { db, matches } from "../db/index.js";
-import { createMatchSchema, listMatchesQuerySchema } from "../validation/matches.js";
+import {
+  createMatchSchema,
+  listMatchesQuerySchema,
+} from "../validation/matches.js";
 
 const MAX_LIMIT = 100;
 
@@ -55,6 +58,10 @@ matchRouter.post("/", async (req, res) => {
         status: status ?? "scheduled",
       })
       .returning();
+
+    if (res.app.locals.broadcastMatchCreated) {
+      res.app.locals.broadcastMatchCreated(event);
+    }
 
     res.status(201).json(event);
   } catch (e) {
